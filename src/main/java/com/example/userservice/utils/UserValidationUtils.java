@@ -9,39 +9,22 @@ import com.example.userservice.mapper.UserMapper;
 public class UserValidationUtils {
 
     public static void validateUserRegister(UserRegisterDTO userRegisterDTO, UserMapper userMapper) {
-        validateUsername(userRegisterDTO.getUsername(), userMapper);
-        validatePhoneNumber(userRegisterDTO.getPhoneNumber(), userMapper);
         validateEmail(userRegisterDTO.getEmail(), userMapper);
 //        validatePassword(userRegisterDTO.getPassword());
     }
 
     public static void validateUserUpdate(UserUpdateDTO userUpdateDTO, UserMapper userMapper) {
-        if(!StringUtil.isNullOrEmpty(userUpdateDTO.getUsername())){
-            validateUsername(userUpdateDTO.getUsername(), userMapper);
-        }
+
         if(!StringUtil.isNullOrEmpty(userUpdateDTO.getPhoneNumber())){
             validatePhoneNumber(userUpdateDTO.getPhoneNumber(), userMapper);
         }
         if(!StringUtil.isNullOrEmpty(userUpdateDTO.getEmail())){
             validateEmail(userUpdateDTO.getEmail(), userMapper);
         }
-        if(!StringUtil.isNullOrEmpty(userUpdateDTO.getPassword())){
-            validatePassword(userUpdateDTO.getPassword());
-        }
+
     }
 
-    // 用户名验证
-    private static void validateUsername(String username, UserMapper userMapper) {
-        if (username.length() < 3 || username.length() > 20) {
-            throw new BusinessException("用户名长度不符合要求");
-        }
-        if (!username.matches("^[a-zA-Z0-9]+$")) {
-            throw new BusinessException("用户名只能包含字母和数字");
-        }
-        if (userMapper.getByUsername(username) != null) {
-            throw new BusinessException("用户名已存在");
-        }
-    }
+
 
     // 手机号验证
     private static void validatePhoneNumber(String phoneNumber, UserMapper userMapper) {

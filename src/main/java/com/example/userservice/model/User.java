@@ -9,12 +9,13 @@ import java.time.LocalDateTime;
 @Data
 public class User {
     private Long id;
-    private String username;
+    private String firstName;
+    private String lastName;
     private String password;
     private String email;
     private String phoneNumber;
-    private Long roleId;
-    private String profileImage;
+    private Integer roleType;
+    private String avatar;
     private String description;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

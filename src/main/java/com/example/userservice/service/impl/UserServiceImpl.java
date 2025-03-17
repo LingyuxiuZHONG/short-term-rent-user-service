@@ -1,23 +1,26 @@
 package com.example.userservice.service.impl;
 
-import ch.qos.logback.core.util.StringUtil;
 import com.example.common.exception.BusinessException;
 import com.example.feignapi.vo.UserVO;
-import com.example.userservice.dto.UserLoginDTO;
-import com.example.userservice.dto.UserRegisterDTO;
-import com.example.userservice.dto.UserUpdateDTO;
+import com.example.userservice.dto.*;
 import com.example.userservice.mapper.UserMapper;
 import com.example.userservice.model.User;
 import com.example.userservice.service.UserService;
 import com.example.userservice.utils.JwtTokenUtil;
-import com.example.userservice.utils.UserValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,19 +30,20 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
 
+
     @Override
     public UserVO register(UserRegisterDTO userRegisterDTO) {
         log.info("用户注册开始，参数：{}", userRegisterDTO);
 
-        UserValidationUtils.validateUserRegister(userRegisterDTO, userMapper);
+//        UserValidationUtils.validateUserRegister(userRegisterDTO, userMapper);
 
         User user = new User();
         BeanUtils.copyProperties(userRegisterDTO, user);
         user.setPassword(passwordEncoder.encode(userRegisterDTO.getPassword()));
-        userMapper.insert(user);
+        userMapper.register(user);
 
-        String token = jwtTokenUtil.generateToken(user.getUsername());
-        log.info("用户注册成功，用户名：{}", user.getUsername());
+        String token = jwtTokenUtil.generateToken(user.getEmail());
+        log.info("用户注册成功");
 
         UserVO userVO = convertToUserVO(user);
         userVO.setToken(token);
@@ -49,16 +53,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserVO login(UserLoginDTO userLoginDTO) {
-        log.info("用户登录开始，用户名：{}", userLoginDTO.getUsername());
+        log.info("用户登录开始，邮箱：{}", userLoginDTO.getEmail());
 
-        User user = userMapper.getByUsername(userLoginDTO.getUsername());
+        User user = userMapper.getByEmail(userLoginDTO.getEmail());
         if (user == null || !passwordEncoder.matches(userLoginDTO.getPassword(), user.getPassword())) {
-            log.warn("用户登录失败，用户名或密码错误，用户名：{}", userLoginDTO.getUsername());
-            throw new BusinessException("用户名或密码错误");
+            log.warn("用户登录失败，邮箱或密码错误，邮箱：{}", userLoginDTO.getEmail());
+            throw new BusinessException("邮箱或密码错误");
         }
 
-        String token = jwtTokenUtil.generateToken(user.getUsername());
-        log.info("用户登录成功，用户名：{}", user.getUsername());
+        String token = jwtTokenUtil.generateToken(user.getEmail());
+        log.info("用户登录成功");
 
         UserVO userVO = convertToUserVO(user);
         userVO.setToken(token);
@@ -84,7 +88,7 @@ public class UserServiceImpl implements UserService {
     public UserVO updateUser(Long id, UserUpdateDTO userUpdateDTO) {
         log.info("更新用户信息开始，用户ID：{}，参数：{}", id, userUpdateDTO);
 
-        UserValidationUtils.validateUserUpdate(userUpdateDTO, userMapper);
+//        UserValidationUtils.validateUserUpdate(userUpdateDTO, userMapper);
 
         User user = userMapper.getById(id);
         if (user == null) {
@@ -92,9 +96,6 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("用户不存在");
         }
 
-        if (!StringUtil.isNullOrEmpty(userUpdateDTO.getPassword())) {
-            user.setPassword(passwordEncoder.encode(userUpdateDTO.getPassword()));
-        }
 
         BeanUtils.copyProperties(userUpdateDTO, user);
         userMapper.update(user);
@@ -114,6 +115,73 @@ public class UserServiceImpl implements UserService {
         }
 
         log.info("删除用户成功，用户ID：{}", id);
+    }
+
+    @Value("${custom.avatar-directory}")
+    private String avatarDir;
+
+    @Override
+    public String uploadAvatar(Long id, MultipartFile avatar) {
+        User user = userMapper.getById(id);
+        if(user == null){
+            throw new BusinessException("用户不存在");
+        }
+
+        // Create the directory if it doesn't exist
+        File directory = new File(avatarDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        String oldUri = user.getAvatar();
+        if(oldUri != null && !oldUri.isEmpty()){
+            // Extract just the filename from the avatar URL
+            String oldFilename = oldUri.substring(oldUri.lastIndexOf("/") + 1);
+            Path oldPath = Paths.get(avatarDir, oldFilename);
+            try{
+                Files.deleteIfExists(oldPath);
+            } catch (IOException e){
+                e.printStackTrace();
+                throw new BusinessException("删除旧头像失败");
+            }
+        }
+
+        String originalFilename = avatar.getOriginalFilename();
+        String fileExtension = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
+        String newFilename = id + fileExtension;
+        Path path = Paths.get(avatarDir, newFilename);
+
+        try {
+            avatar.transferTo(path.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new BusinessException("保存头像失败");
+        }
+
+        String avatarUrl = "/upload/avatars/" + newFilename;
+        user.setAvatar(avatarUrl);
+        userMapper.uploadAvatar(user);
+
+        return avatarUrl;
+    }
+
+    @Override
+    public void verifyPassword(Long id, PasswordVerifyDTO passwordVerifyDTO) {
+        User user = userMapper.getById(id);
+        if(user == null || !passwordEncoder.matches(passwordVerifyDTO.getPassword(), user.getPassword())){
+            throw new BusinessException("密码验证失败");
+        }
+    }
+
+    @Override
+    public void updatePassword(Long id, PasswordUpdateDTO passwordUpdateDTO) {
+        User user = userMapper.getById(id);
+        if(user == null || !passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), user.getPassword())){
+            throw new BusinessException("密码验证失败");
+        }
+
+        user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getPassword()));
+        userMapper.updatePassword(user);
     }
 
     private UserVO convertToUserVO(User user) {

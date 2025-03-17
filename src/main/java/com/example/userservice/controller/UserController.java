@@ -3,14 +3,13 @@ package com.example.userservice.controller;
 
 import com.example.common.ApiResponse;
 import com.example.feignapi.vo.UserVO;
-import com.example.userservice.dto.UserRegisterDTO;
-import com.example.userservice.dto.UserLoginDTO;
-import com.example.userservice.dto.UserUpdateDTO;
+import com.example.userservice.dto.*;
 import com.example.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -45,6 +44,24 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserVO>> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         UserVO userVO = userService.updateUser(id,userUpdateDTO);
         return ResponseEntity.ok(ApiResponse.success("更新用户信息成功", userVO));
+    }
+
+    @PostMapping("/{id}/verify-password")
+    public ResponseEntity<ApiResponse<String>> verifyPassword(@PathVariable Long id, @RequestBody PasswordVerifyDTO passwordVerifyDTO){
+        userService.verifyPassword(id,passwordVerifyDTO);
+        return ResponseEntity.ok(ApiResponse.success("验证成功"));
+    }
+
+    @PutMapping("/{id}/password")
+    public ResponseEntity<ApiResponse<String>> updatePassword(@PathVariable Long id, @RequestBody PasswordUpdateDTO passwordUpdateDTO){
+        userService.updatePassword(id,passwordUpdateDTO);
+        return ResponseEntity.ok(ApiResponse.success("更新密码成功"));
+    }
+
+    @PostMapping("/{id}/avatar")
+    public ResponseEntity<ApiResponse<String>> uploadAvatar(@PathVariable Long id, @RequestParam("avatar") MultipartFile avatar){
+        String url = userService.uploadAvatar(id,avatar);
+        return ResponseEntity.ok(ApiResponse.success("上传成功", url));
     }
 
     // 删除用户

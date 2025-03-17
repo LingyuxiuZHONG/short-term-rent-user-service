@@ -6,9 +6,6 @@
         SELECT * FROM user WHERE id = #{id}
     </select>
 
-    <select id="getByUsername" resultType="com.example.userservice.model.User">
-        SELECT * FROM user WHERE username = #{username}
-    </select>
 
     <select id="getByPhoneNumber" resultType="com.example.userservice.model.User">
         SELECT * FROM user WHERE phone_number = #{phoneNumber}
@@ -18,20 +15,27 @@
         SELECT * FROM user WHERE email = #{email}
     </select>
 
-    <insert id="insert" parameterType="com.example.userservice.model.User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO user (username, password, email, phone_number, description, role_id)
-        VALUES (#{username}, #{password}, #{email}, #{phoneNumber}, #{description}, #{roleId})
+    <insert id="register" parameterType="com.example.userservice.model.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (first_name, last_name, password, email, role_type)
+        VALUES (#{firstName}, #{lastName}, #{password}, #{email}, #{roleType})
     </insert>
 
     <update id="update" parameterType="com.example.userservice.model.User">
         UPDATE user
         <set>
-            username = #{username},
-            password = #{password},
+            first_name = #{firstName},
+            last_name = #{lastName},
             email = #{email},
             phone_number = #{phoneNumber},
-            profile_image = #{profileImage},
             description = #{description}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePassword">
+        UPDATE user
+        <set>
+            password = #{password}
         </set>
         WHERE id = #{id}
     </update>
@@ -40,4 +44,12 @@
     <delete id="delete">
         DELETE FROM user WHERE id = #{id}
     </delete>
+
+    <update id="uploadAvatar">
+        UPDATE user
+        <set>
+            avatar = #{avatar}
+        </set>
+        WHERE id = #{id}
+    </update>
 </mapper>
