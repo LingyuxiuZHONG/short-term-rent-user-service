@@ -2,6 +2,7 @@ package com.example.userservice.controller;
 
 
 import com.example.common.ApiResponse;
+import com.example.feignapi.vo.FavoriteCard;
 import com.example.feignapi.vo.UserVO;
 import com.example.userservice.dto.*;
 import com.example.userservice.service.UserService;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -59,9 +62,9 @@ public class UserController {
     }
 
     @PostMapping("/{id}/avatar")
-    public ResponseEntity<ApiResponse<String>> uploadAvatar(@PathVariable Long id, @RequestParam("avatar") MultipartFile avatar){
-        String url = userService.uploadAvatar(id,avatar);
-        return ResponseEntity.ok(ApiResponse.success("上传成功", url));
+    public ResponseEntity<ApiResponse<String>> uploadAvatar(@PathVariable Long id, @RequestParam String fileUrl){
+        userService.uploadAvatar(id,fileUrl);
+        return ResponseEntity.ok(ApiResponse.success("上传成功"));
     }
 
     // 删除用户
@@ -70,6 +73,7 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success("删除成功"));
     }
+
 
 
 

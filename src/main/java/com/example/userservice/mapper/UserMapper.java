@@ -15,4 +15,7 @@ public interface UserMapper {
     void uploadAvatar(User user);
 
     void updatePassword(User user);
+
+
+
 }

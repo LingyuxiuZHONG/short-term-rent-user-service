@@ -1,8 +1,10 @@
 package com.example.userservice.service.impl;
 
 import com.example.common.exception.BusinessException;
+import com.example.feignapi.clients.ListingClient;
 import com.example.feignapi.vo.UserVO;
 import com.example.userservice.dto.*;
+import com.example.userservice.mapper.FavoriteMapper;
 import com.example.userservice.mapper.UserMapper;
 import com.example.userservice.model.User;
 import com.example.userservice.service.UserService;
@@ -13,13 +15,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +22,10 @@ import java.nio.file.Paths;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
+    private final FavoriteMapper favoriteMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
+    private final ListingClient listingClient;
 
 
     @Override
@@ -121,48 +118,17 @@ public class UserServiceImpl implements UserService {
     private String avatarDir;
 
     @Override
-    public String uploadAvatar(Long id, MultipartFile avatar) {
+    public void uploadAvatar(Long id, String fileUrl) {
         User user = userMapper.getById(id);
         if(user == null){
             throw new BusinessException("用户不存在");
         }
 
-        // Create the directory if it doesn't exist
-        File directory = new File(avatarDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
 
-        String oldUri = user.getAvatar();
-        if(oldUri != null && !oldUri.isEmpty()){
-            // Extract just the filename from the avatar URL
-            String oldFilename = oldUri.substring(oldUri.lastIndexOf("/") + 1);
-            Path oldPath = Paths.get(avatarDir, oldFilename);
-            try{
-                Files.deleteIfExists(oldPath);
-            } catch (IOException e){
-                e.printStackTrace();
-                throw new BusinessException("删除旧头像失败");
-            }
-        }
 
-        String originalFilename = avatar.getOriginalFilename();
-        String fileExtension = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
-        String newFilename = id + fileExtension;
-        Path path = Paths.get(avatarDir, newFilename);
-
-        try {
-            avatar.transferTo(path.toFile());
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new BusinessException("保存头像失败");
-        }
-
-        String avatarUrl = "/upload/avatars/" + newFilename;
-        user.setAvatar(avatarUrl);
+        user.setAvatar(fileUrl);
         userMapper.uploadAvatar(user);
 
-        return avatarUrl;
     }
 
     @Override
@@ -183,6 +149,8 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getPassword()));
         userMapper.updatePassword(user);
     }
+
+
 
     private UserVO convertToUserVO(User user) {
         UserVO userVO = new UserVO();

@@ -41,6 +41,8 @@
     </update>
 
 
+
+
     <delete id="delete">
         DELETE FROM user WHERE id = #{id}
     </delete>
