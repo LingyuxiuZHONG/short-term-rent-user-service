@@ -1,5 +1,6 @@
 package com.example.userservice.service;
 
+import com.example.feignapi.vo.UserCard;
 import com.example.feignapi.vo.UserVO;
 import com.example.userservice.dto.*;
 
@@ -17,4 +18,8 @@ public interface UserService {
     void updatePassword(Long id, PasswordUpdateDTO passwordUpdateDTO);
 
 
+    UserCard getOtherUser(Long id);
+
+
+    void resetPassword(ResetPasswordDTO resetPasswordDTO);
 }

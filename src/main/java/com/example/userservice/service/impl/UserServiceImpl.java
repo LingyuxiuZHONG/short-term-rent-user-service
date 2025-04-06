@@ -2,6 +2,7 @@ package com.example.userservice.service.impl;
 
 import com.example.common.exception.BusinessException;
 import com.example.feignapi.clients.ListingClient;
+import com.example.feignapi.vo.UserCard;
 import com.example.feignapi.vo.UserVO;
 import com.example.userservice.dto.*;
 import com.example.userservice.mapper.FavoriteMapper;
@@ -114,8 +115,6 @@ public class UserServiceImpl implements UserService {
         log.info("删除用户成功，用户ID：{}", id);
     }
 
-    @Value("${custom.avatar-directory}")
-    private String avatarDir;
 
     @Override
     public void uploadAvatar(Long id, String fileUrl) {
@@ -123,7 +122,6 @@ public class UserServiceImpl implements UserService {
         if(user == null){
             throw new BusinessException("用户不存在");
         }
-
 
 
         user.setAvatar(fileUrl);
@@ -150,11 +148,34 @@ public class UserServiceImpl implements UserService {
         userMapper.updatePassword(user);
     }
 
+    @Override
+    public UserCard getOtherUser(Long id) {
+
+        User user = userMapper.getById(id);
+        return convertToUserCard(user);
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
+        User user = userMapper.getByEmail(resetPasswordDTO.getEmail());
+        if(user == null){
+            throw new BusinessException("用户不存在失败");
+        }
+
+        user.setPassword(passwordEncoder.encode(resetPasswordDTO.getPassword()));
+        userMapper.updatePassword(user);
+    }
 
 
     private UserVO convertToUserVO(User user) {
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(user, userVO);
         return userVO;
+    }
+
+    private UserCard convertToUserCard(User user){
+        UserCard userCard = new UserCard();
+        BeanUtils.copyProperties(user, userCard);
+        return userCard;
     }
 }

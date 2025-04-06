@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,4 +37,9 @@ public class FavoriteController {
         return ResponseEntity.ok(ApiResponse.success("删除成功"));
     }
 
+    @PostMapping("/{userId}/favoritesSet")
+    ResponseEntity<ApiResponse<Set<Long>>> getFavoriteListingIds(@PathVariable Long userId){
+        Set<Long> set = favoriteService.getFavoriteListingIds(userId);
+        return ResponseEntity.ok(ApiResponse.success("查询成功", set));
+    }
 }

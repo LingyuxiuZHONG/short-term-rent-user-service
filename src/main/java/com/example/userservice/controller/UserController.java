@@ -2,7 +2,7 @@ package com.example.userservice.controller;
 
 
 import com.example.common.ApiResponse;
-import com.example.feignapi.vo.FavoriteCard;
+import com.example.feignapi.vo.UserCard;
 import com.example.feignapi.vo.UserVO;
 import com.example.userservice.dto.*;
 import com.example.userservice.service.UserService;
@@ -10,9 +10,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -72,6 +69,19 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success("删除成功"));
+    }
+
+
+    @GetMapping("/otherUser/{id}")
+    public ResponseEntity<ApiResponse<UserCard>> getOtherUser(@PathVariable Long id){
+        UserCard userCard = userService.getOtherUser(id);
+        return ResponseEntity.ok(ApiResponse.success("查询成功", userCard));
+    }
+
+    @PostMapping("/resetPassword")
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO){
+        userService.resetPassword(resetPasswordDTO);
+        return ResponseEntity.ok(ApiResponse.success("修改成功"));
     }
 
 

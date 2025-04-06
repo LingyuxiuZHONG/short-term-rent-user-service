@@ -13,8 +13,6 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
-custom:
-  avatar-directory: /Users/kevin/short-term-rent/upload/avatars
 mybatis:
   type-aliases-package: com.example.userservice.model  # 实体类路径
   mapper-locations: classpath:mapper/*.xml  # 映射文件路径
